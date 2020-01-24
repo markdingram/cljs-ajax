@@ -10,6 +10,7 @@
             HttpEntityEnclosingRequestBase]
            [org.apache.http.client.config RequestConfig CookieSpecs]
            [org.apache.http.concurrent FutureCallback]
+           [org.apache.http.impl.client BasicCookieStore]
            [org.apache.http.impl.nio.client HttpAsyncClients]
            [java.lang Exception]
            [java.util.concurrent Future]
@@ -182,7 +183,7 @@
       (-abort [_]
         (cancel* true)))))
 
-(defrecord Connection []
+(defrecord Connection [cookie-store]
   AjaxImpl
   (-js-ajax-request
     [this {:keys [uri method body headers] :as opts} handler]
@@ -192,7 +193,8 @@
                       (.setEntity (to-entity body)))
             request-config (create-request-config opts)
             builder (doto (HttpAsyncClients/custom)
-                      (.setDefaultRequestConfig request-config))
+                      (.setDefaultRequestConfig request-config)
+                      (.setDefaultCookieStore cookie-store))
             client (doto (.build builder)
                      (.start))
             h (create-handler handler)]
@@ -209,4 +211,4 @@
    Note that it's completely stateless: all of the relevant
    implementation objects are created each time."
 
-  (Connection.))
+  (Connection. (BasicCookieStore.)))
